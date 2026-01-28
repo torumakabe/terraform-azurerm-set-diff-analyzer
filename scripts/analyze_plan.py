@@ -115,6 +115,20 @@ def get_element_key(element: dict[str, Any], key_attr: str | None) -> str:
     return str(hash(json.dumps(element, sort_keys=True)))
 
 
+def normalize_value(val: Any) -> Any:
+    """Normalize values for comparison (treat empty string and None as equivalent)."""
+    if val == "" or val is None:
+        return None
+    if isinstance(val, list) and len(val) == 0:
+        return None
+    return val
+
+
+def values_equivalent(before_val: Any, after_val: Any) -> bool:
+    """Check if two values are effectively equivalent."""
+    return normalize_value(before_val) == normalize_value(after_val)
+
+
 def compare_elements(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
     """Compare two elements and return the differences."""
     diffs = {}
@@ -123,7 +137,7 @@ def compare_elements(before: dict[str, Any], after: dict[str, Any]) -> dict[str,
     for key in all_keys:
         before_val = before.get(key)
         after_val = after.get(key)
-        if before_val != after_val:
+        if not values_equivalent(before_val, after_val):
             diffs[key] = {"before": before_val, "after": after_val}
     
     return diffs
@@ -167,10 +181,15 @@ def analyze_set_attribute(
             # Exact match - this is just an order change
             change.order_only_count += 1
         else:
-            # Content changed
+            # Content changed - check if there are meaningful differences
             diffs = compare_elements(before_elem, after_elem)
-            display_key = key if key_attr else "(element)"
-            change.modified.append((display_key, diffs))
+            if diffs:
+                # Has actual differences
+                display_key = key if key_attr else "(element)"
+                change.modified.append((display_key, diffs))
+            else:
+                # Only null/empty differences - treat as order change
+                change.order_only_count += 1
     
     return change
 
