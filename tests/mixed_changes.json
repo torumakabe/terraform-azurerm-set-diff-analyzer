@@ -1,0 +1,78 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.7.0",
+  "resource_changes": [
+    {
+      "address": "azurerm_application_gateway.main",
+      "mode": "managed",
+      "type": "azurerm_application_gateway",
+      "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "name": "appgw-main",
+          "backend_address_pool": [
+            {"name": "pool-a", "fqdns": ["a.example.com"], "ip_addresses": []},
+            {"name": "pool-b", "fqdns": ["b.example.com"], "ip_addresses": []}
+          ],
+          "http_listener": [
+            {"name": "listener-http", "frontend_port_name": "port-80", "protocol": "Http"},
+            {"name": "listener-https", "frontend_port_name": "port-443", "protocol": "Https"}
+          ],
+          "request_routing_rule": [
+            {"name": "rule-1", "priority": 100, "http_listener_name": "listener-http"},
+            {"name": "rule-2", "priority": 200, "http_listener_name": "listener-https"}
+          ],
+          "sku": {"name": "Standard_v2", "tier": "Standard_v2", "capacity": 2},
+          "tags": {"env": "dev"}
+        },
+        "after": {
+          "name": "appgw-main",
+          "backend_address_pool": [
+            {"name": "pool-c", "fqdns": ["c.example.com"], "ip_addresses": []},
+            {"name": "pool-a", "fqdns": ["a.example.com"], "ip_addresses": []},
+            {"name": "pool-b", "fqdns": ["b-updated.example.com"], "ip_addresses": []}
+          ],
+          "http_listener": [
+            {"name": "listener-https", "frontend_port_name": "port-443", "protocol": "Https"},
+            {"name": "listener-http", "frontend_port_name": "port-8080", "protocol": "Http"}
+          ],
+          "request_routing_rule": [
+            {"name": "rule-2", "priority": 200, "http_listener_name": "listener-https"},
+            {"name": "rule-1", "priority": 100, "http_listener_name": "listener-http"}
+          ],
+          "sku": {"name": "WAF_v2", "tier": "WAF_v2", "capacity": 3},
+          "tags": {"env": "prod"}
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_network_security_group.nsg",
+      "mode": "managed",
+      "type": "azurerm_network_security_group",
+      "name": "nsg",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "name": "nsg-main",
+          "security_rule": [
+            {"name": "allow-http", "priority": 100, "direction": "Inbound", "access": "Allow", "protocol": "Tcp", "source_port_range": "*", "destination_port_range": "80"},
+            {"name": "allow-https", "priority": 200, "direction": "Inbound", "access": "Allow", "protocol": "Tcp", "source_port_range": "*", "destination_port_range": "443"}
+          ]
+        },
+        "after": {
+          "name": "nsg-main",
+          "security_rule": [
+            {"name": "allow-https", "priority": 200, "direction": "Inbound", "access": "Allow", "protocol": "Tcp", "source_port_range": "*", "destination_port_range": "443"},
+            {"name": "allow-http", "priority": 100, "direction": "Inbound", "access": "Allow", "protocol": "Tcp", "source_port_range": "*", "destination_port_range": "80"},
+            {"name": "allow-ssh", "priority": 300, "direction": "Inbound", "access": "Allow", "protocol": "Tcp", "source_port_range": "*", "destination_port_range": "22"}
+          ]
+        },
+        "after_unknown": {}
+      }
+    }
+  ]
+}
