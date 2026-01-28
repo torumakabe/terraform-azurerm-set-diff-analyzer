@@ -6,7 +6,7 @@ This directory contains Terraform configurations to test the analyzer with real 
 
 - Azure subscription
 - Azure CLI logged in (`az login`)
-- Terraform >= 1.5.0
+- Terraform >= 1.14.0
 
 ## Resources Created
 
