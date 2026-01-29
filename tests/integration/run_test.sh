@@ -54,154 +54,35 @@ modify_security_rule_ssh() {
     rm -f "$MAIN_TF.bak"
 }
 
-# Function to add Application Gateway with nested Set structures
-add_application_gateway() {
-    echo "    Adding Application Gateway with nested Set structures..."
+# Function to add a new backend_address_pool to Application Gateway (nested Set addition)
+add_appgw_backend_pool() {
+    echo "    Adding pool-app4 to azurerm_application_gateway.test..."
 
-    # Append Application Gateway resource to main.tf
-    cat >> "$MAIN_TF" << 'EOF'
-
-resource "azurerm_public_ip" "appgw" {
-  name                = "pip-appgw-test"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-}
-
-resource "azurerm_application_gateway" "test" {
-  name                = "appgw-test"
-  location            = azurerm_resource_group.test.location
-  resource_group_name = azurerm_resource_group.test.name
-
-  sku {
-    name     = "Standard_v2"
-    tier     = "Standard_v2"
-    capacity = 2
-  }
-
-  gateway_ip_configuration {
-    name      = "gateway-ip-config"
-    subnet_id = azurerm_subnet.gateway.id
-  }
-
-  frontend_port {
-    name = "port-80"
-    port = 80
-  }
-
-  frontend_port {
-    name = "port-443"
-    port = 443
-  }
-
-  frontend_ip_configuration {
-    name                 = "frontend-ip"
-    public_ip_address_id = azurerm_public_ip.appgw.id
-  }
-
-  backend_address_pool {
-    name = "pool-web"
-    fqdns = ["web1.example.com", "web2.example.com"]
-  }
-
-  backend_address_pool {
-    name = "pool-api"
-    fqdns = ["api.example.com"]
-  }
-
-  backend_http_settings {
-    name                  = "http-settings-web"
-    cookie_based_affinity = "Disabled"
-    port                  = 80
-    protocol              = "Http"
-    request_timeout       = 30
-  }
-
-  http_listener {
-    name                           = "listener-http"
-    frontend_ip_configuration_name = "frontend-ip"
-    frontend_port_name             = "port-80"
-    protocol                       = "Http"
-  }
-
-  request_routing_rule {
-    name                       = "rule-http"
-    rule_type                  = "Basic"
-    http_listener_name         = "listener-http"
-    backend_address_pool_name  = "pool-web"
-    backend_http_settings_name = "http-settings-web"
-    priority                   = 100
-  }
-
-  rewrite_rule_set {
-    name = "rewrite-set-1"
-
-    rewrite_rule {
-      name          = "add-x-forwarded-for"
-      rule_sequence = 100
-
-      condition {
-        variable    = "http_req_Host"
-        pattern     = ".*"
-        ignore_case = true
-      }
-
-      request_header_configuration {
-        header_name  = "X-Forwarded-For"
-        header_value = "{var_client_ip}"
-      }
-    }
-
-    rewrite_rule {
-      name          = "add-custom-header"
-      rule_sequence = 200
-
-      request_header_configuration {
-        header_name  = "X-Custom-Header"
-        header_value = "custom-value"
-      }
-    }
-  }
-}
-
-resource "azurerm_subnet" "gateway" {
-  name                 = "GatewaySubnet"
-  resource_group_name  = azurerm_resource_group.test.name
-  virtual_network_name = azurerm_virtual_network.test.name
-  address_prefixes     = ["10.0.255.0/24"]
-}
-EOF
-}
-
-# Function to add a rewrite rule to existing Application Gateway (nested Set modification)
-add_appgw_rewrite_rule() {
-    echo "    Adding new rewrite rule to Application Gateway..."
-
-    # Find the last rewrite_rule closing brace and insert new rule before rewrite_rule_set closing
+    # Insert new backend_address_pool after pool-app3
     awk '
-    /^  rewrite_rule_set \{/ { in_set = 1 }
-    in_set && /^    rewrite_rule \{/ { in_rule = 1 }
-    in_rule && /^    \}/ {
-        in_rule = 0
-        last_rule_line = NR
-    }
-    in_set && /^  \}/ && last_rule_line > 0 {
+    /backend_address_pool \{/ { in_pool = 1 }
+    in_pool && /name.*=.*"pool-app3"/ { found_app3 = 1 }
+    found_app3 && /^  \}/ {
+        print
         print ""
-        print "    rewrite_rule {"
-        print "      name          = \"add-security-header\""
-        print "      rule_sequence = 300"
-        print ""
-        print "      response_header_configuration {"
-        print "        header_name  = \"X-Content-Type-Options\""
-        print "        header_value = \"nosniff\""
-        print "      }"
-        print "    }"
-        last_rule_line = 0
-        in_set = 0
+        print "  backend_address_pool {"
+        print "    name  = \"pool-app4\""
+        print "    fqdns = [\"app4.example.com\"]"
+        print "  }"
+        found_app3 = 0
+        in_pool = 0
+        next
     }
     { print }
     ' "$MAIN_TF" > "$MAIN_TF.tmp" && mv "$MAIN_TF.tmp" "$MAIN_TF"
+}
+
+# Function to modify backend_http_settings (nested Set actual change)
+modify_appgw_http_settings() {
+    echo "    Modifying http-settings-api request_timeout (60 -> 120)..."
+
+    sed -i.bak 's/request_timeout       = 60/request_timeout       = 120/' "$MAIN_TF"
+    rm -f "$MAIN_TF.bak"
 }
 
 # Function to restore main.tf from backup
@@ -351,63 +232,62 @@ if [[ "$apply_modify" =~ ^[Yy]$ ]]; then
     sleep 10
 fi
 
-# Step 8: Test nested Set structures (Application Gateway)
+# Step 8: Test nested Set element addition (Application Gateway backend_address_pool)
 echo ""
-echo ">>> Step 6: Adding Application Gateway with nested Set structures..."
-add_application_gateway
+echo ">>> Step 6: Adding new backend_address_pool to Application Gateway..."
+add_appgw_backend_pool
 
 echo ""
-echo ">>> Running plan after adding Application Gateway..."
-terraform plan -out=plan_add_appgw.tfplan
-terraform show -json plan_add_appgw.tfplan > plan_add_appgw.json
+echo ">>> Running plan after adding backend_address_pool..."
+terraform plan -out=plan_add_pool.tfplan
+terraform show -json plan_add_pool.tfplan > plan_add_pool.json
 
 echo ""
-echo "=== Plan Analysis After Adding Application Gateway ==="
-echo ">>> Observing nested Set structures: backend_address_pool, rewrite_rule_set.rewrite_rule, etc."
+echo "=== Plan Analysis After Adding Backend Pool ==="
+echo ">>> Look for pool-app4 as actual addition + potential order-only changes for pool-app1/2/3."
 echo ""
-python3 "$ANALYZER" plan_add_appgw.json
+python3 "$ANALYZER" plan_add_pool.json
 
-# Step 9: Apply Application Gateway
+# Step 9: Apply backend pool addition
 echo ""
-read -p ">>> Apply Application Gateway? (This may take 10-15 minutes) (y/N): " apply_appgw
-if [[ "$apply_appgw" =~ ^[Yy]$ ]]; then
-    echo ">>> Applying Application Gateway (this will take several minutes)..."
+read -p ">>> Apply backend pool addition? (y/N): " apply_pool
+if [[ "$apply_pool" =~ ^[Yy]$ ]]; then
+    echo ">>> Applying backend pool addition..."
     terraform apply -auto-approve
 
     echo ""
     echo ">>> Waiting for Azure API to stabilize..."
     sleep 15
-
-    # Step 10: Modify nested Set (add rewrite rule)
-    echo ""
-    echo ">>> Step 7: Adding new rewrite rule to nested Set..."
-    add_appgw_rewrite_rule
-
-    echo ""
-    echo ">>> Running plan after modifying nested Set..."
-    terraform plan -out=plan_modify_nested.tfplan
-    terraform show -json plan_modify_nested.tfplan > plan_modify_nested.json
-
-    echo ""
-    echo "=== Plan Analysis After Nested Set Modification ==="
-    echo ">>> Look for order-only changes in existing rewrite rules."
-    echo ""
-    python3 "$ANALYZER" plan_modify_nested.json
-
-    # Step 11: Apply nested modification
-    echo ""
-    read -p ">>> Apply nested Set modification? (y/N): " apply_nested
-    if [[ "$apply_nested" =~ ^[Yy]$ ]]; then
-        echo ">>> Applying nested modification..."
-        terraform apply -auto-approve
-
-        echo ""
-        echo ">>> Waiting for Azure API to stabilize..."
-        sleep 10
-    fi
 fi
 
-# Step 12: Final plan check
+# Step 10: Test nested Set element modification (Application Gateway backend_http_settings)
+echo ""
+echo ">>> Step 7: Modifying backend_http_settings request_timeout..."
+modify_appgw_http_settings
+
+echo ""
+echo ">>> Running plan after modifying backend_http_settings..."
+terraform plan -out=plan_modify_settings.tfplan
+terraform show -json plan_modify_settings.tfplan > plan_modify_settings.json
+
+echo ""
+echo "=== Plan Analysis After Modifying HTTP Settings ==="
+echo ">>> Look for http-settings-api as actual change + potential order-only changes for http-settings-default."
+echo ""
+python3 "$ANALYZER" plan_modify_settings.json
+
+# Step 11: Apply http settings modification
+echo ""
+read -p ">>> Apply http settings modification? (y/N): " apply_settings
+if [[ "$apply_settings" =~ ^[Yy]$ ]]; then
+    echo ">>> Applying http settings modification..."
+    terraform apply -auto-approve
+
+    echo ""
+    echo ">>> Waiting for Azure API to stabilize..."
+    sleep 15
+fi
+
 # Step 12: Final plan check
 echo ""
 read -p ">>> Run final plan to verify no changes? (y/N): " run_final
@@ -429,7 +309,7 @@ echo ">>> Restoring original main.tf..."
 restore_main_tf
 trap - EXIT
 
-# Step 7: Cleanup (if not skipped)
+# Step 14: Cleanup (if not skipped)
 if [ "$SKIP_DESTROY" = false ]; then
     echo ""
     read -p ">>> Destroy test resources? (y/N): " confirm
@@ -445,17 +325,16 @@ fi
 rm -f plan_initial.tfplan plan_initial.json
 rm -f plan_add_elements.tfplan plan_add_elements.json
 rm -f plan_modify_element.tfplan plan_modify_element.json
-rm -f plan_add_appgw.tfplan plan_add_appgw.json
-rm -f plan_modify_nested.tfplan plan_modify_nested.json
+rm -f plan_add_pool.tfplan plan_add_pool.json
+rm -f plan_modify_settings.tfplan plan_modify_settings.json
 
 echo ""
 echo "=== Integration Test Complete ==="
 echo ""
 echo "Test Coverage Summary:"
-echo "  ✅ Order-only changes (security_rule)"
-echo "  ✅ Element addition (allow-rdp)"
-echo "  ✅ Element modification (allow-ssh source_address_prefix change)"
-echo "  ✅ Nested Set structures (Application Gateway)"
-echo "  ✅ Nested Set modification (rewrite_rule addition)"
+echo "  ✅ NSG: Element addition (allow-rdp)"
+echo "  ✅ NSG: Element modification (allow-ssh source_address_prefix change)"
+echo "  ✅ App Gateway: Nested Set addition (backend_address_pool)"
+echo "  ✅ App Gateway: Nested Set modification (backend_http_settings timeout)"
 echo ""
 echo "Note: Subnets use standalone resources to avoid inline/standalone conflicts."
