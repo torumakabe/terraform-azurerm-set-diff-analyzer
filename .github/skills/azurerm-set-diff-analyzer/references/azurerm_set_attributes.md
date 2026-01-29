@@ -128,7 +128,7 @@ python3 scripts/analyze_plan.py plan.json --attributes /path/to/custom.json
 
 ```bash
 # リソース一覧を表示
-jq '.resources | keys' references/azurerm_set_attributes.json
+jq '.resources | keys' azurerm_set_attributes.json
 ```
 
 主要なリソース：

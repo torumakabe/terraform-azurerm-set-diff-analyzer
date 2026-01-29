@@ -1,5 +1,4 @@
 {
-    "$schema": "./azurerm_set_attributes.schema.json",
     "metadata": {
         "description": "AzureRM Provider Set型属性定義",
         "lastUpdated": "2026-01-28",

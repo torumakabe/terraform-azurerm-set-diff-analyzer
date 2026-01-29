@@ -2,8 +2,10 @@
   "resource_changes": [
     {
       "address": "azurerm_application_gateway.main",
+      "mode": "managed",
       "type": "azurerm_application_gateway",
       "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
       "change": {
         "actions": [
           "update"
@@ -110,8 +112,10 @@
     },
     {
       "address": "azurerm_firewall_policy_rule_collection_group.main",
+      "mode": "managed",
       "type": "azurerm_firewall_policy_rule_collection_group",
       "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
       "change": {
         "actions": [
           "update"

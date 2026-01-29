@@ -8,6 +8,36 @@ This directory contains Terraform configurations to test the analyzer with real 
 - Azure CLI logged in (`az login`)
 - Terraform >= 1.14.0
 
+## Test Scripts
+
+| Script | Description |
+|--------|-------------|
+| `run_integration_test.sh` | Full integration test: deploys resources, makes changes, and analyzes plans |
+| `test_helper_functions.sh` | Unit tests for helper functions (runs without Azure) |
+| `helpers.sh` | Shared helper functions for manipulating `main.tf` |
+
+### Quick Start
+
+```bash
+# Run full integration test (requires Azure subscription)
+./run_integration_test.sh
+
+# Run with auto-confirm (no prompts)
+./run_integration_test.sh -y
+
+# Test helper functions only (no Azure required)
+./test_helper_functions.sh
+```
+
+### run_integration_test.sh Options
+
+| Option | Description |
+|--------|-------------|
+| `--skip-deploy` | Skip initial deployment (use existing resources) |
+| `--skip-destroy` | Skip cleanup after test |
+| `-y, --yes` | Auto-confirm all prompts |
+| `-h, --help` | Show help |
+
 ## Resources Created
 
 | Resource | Type | Cost | Set-type Attributes Tested |

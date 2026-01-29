@@ -31,27 +31,7 @@ terraform show -json plan.tfplan > plan.json
 python scripts/analyze_plan.py plan.json
 ```
 
-## 出力の見方
-
-| 分類 | 意味 | アクション |
-|------|------|-----------|
-| 🟢 順序変更のみ | 偽差分、実際の変更なし | 無視してOK |
-| 🟡 実際の変更 | Set要素の追加/削除/変更 | 内容を確認 |
-| 🔴 リソース再作成 | delete + create | ダウンタイム影響を確認 |
-| ➕ 新規作成 | 新しいリソース | 意図した追加か確認 |
-| ➖ 削除 | リソース削除 | 意図した削除か確認 |
-| ℹ️ その他 | 非Set型属性の変更 | 通常のレビュー |
-
-## 終了コード（`--exit-code` 使用時）
-
-| コード | 意味 |
-|--------|------|
-| 0 | 変更なし、または順序変更のみ |
-| 1 | Set型属性の実際の変更あり |
-| 2 | リソース再作成あり |
-| 3 | エラー |
-
 ## 詳細ドキュメント
 
-- [scripts/README.md](scripts/README.md) - 全オプション、出力形式、CI/CD例
+- [scripts/README.md](scripts/README.md) - 全オプション、出力形式、終了コード、CI/CD例
 - [references/azurerm_set_attributes.md](references/azurerm_set_attributes.md) - 対象リソース・属性一覧
