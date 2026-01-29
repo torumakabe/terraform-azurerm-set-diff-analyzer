@@ -1,61 +1,61 @@
 # AzureRM Set Diff Analyzer Script
 
-Terraform plan JSON を分析し、AzureRM Set型属性の「偽差分」を識別するPythonスクリプトです。
+A Python script that analyzes Terraform plan JSON and identifies "false-positive diffs" in AzureRM Set-type attributes.
 
-## 概要
+## Overview
 
-AzureRM Provider の Set 型属性（`backend_address_pool`、`security_rule` など）は順序が保証されないため、要素の追加・削除時に全要素が「変更」として表示される問題があります。このスクリプトは、そのような「偽差分」と実際の変更を区別します。
+AzureRM Provider's Set-type attributes (such as `backend_address_pool`, `security_rule`, etc.) don't guarantee order, so when adding or removing elements, all elements appear as "changed". This script distinguishes such "false-positive diffs" from actual changes.
 
-### 使用用途
+### Use Cases
 
-- **Copilot CLI Skill** として（推奨）
-- **CLI ツール** として手動実行
-- **CI/CD パイプライン** で自動分析
+- As a **Copilot CLI Skill** (recommended)
+- As a **CLI tool** for manual execution
+- For automated analysis in **CI/CD pipelines**
 
-## 前提条件
+## Prerequisites
 
-- Python 3.8 以上
-- 追加パッケージ不要（標準ライブラリのみ使用）
+- Python 3.8 or higher
+- No additional packages required (uses only standard library)
 
-## 使用方法
+## Usage
 
-### 基本的な使い方
+### Basic Usage
 
 ```bash
-# ファイルから読み込み
+# Read from file
 python analyze_plan.py plan.json
 
-# 標準入力から読み込み
+# Read from stdin
 terraform show -json plan.tfplan | python analyze_plan.py
 ```
 
-### オプション
+### Options
 
-| オプション | 短縮形 | 説明 | デフォルト |
-|-----------|--------|------|-----------|
-| `--format` | `-f` | 出力形式（markdown/json/summary） | markdown |
-| `--exit-code` | `-e` | 変更に応じた終了コードを返す | false |
-| `--quiet` | `-q` | 警告を抑制 | false |
-| `--verbose` | `-v` | 詳細な警告を表示 | false |
-| `--ignore-case` | - | 大文字小文字を無視して比較 | false |
-| `--attributes` | - | カスタム属性定義ファイルのパス | (内蔵) |
-| `--include` | - | 分析対象リソースのフィルタ（複数指定可） | (全て) |
-| `--exclude` | - | 除外するリソースのフィルタ（複数指定可） | (なし) |
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format` | `-f` | Output format (markdown/json/summary) | markdown |
+| `--exit-code` | `-e` | Return exit code based on changes | false |
+| `--quiet` | `-q` | Suppress warnings | false |
+| `--verbose` | `-v` | Show detailed warnings | false |
+| `--ignore-case` | - | Compare values case-insensitively | false |
+| `--attributes` | - | Path to custom attribute definition file | (built-in) |
+| `--include` | - | Filter resources to analyze (can specify multiple) | (all) |
+| `--exclude` | - | Filter resources to exclude (can specify multiple) | (none) |
 
-### 終了コード（`--exit-code` 使用時）
+### Exit Codes (with `--exit-code`)
 
-| コード | 意味 |
-|--------|------|
-| 0 | 変更なし、または順序変更のみ |
-| 1 | Set型属性の実際の変更あり |
-| 2 | リソース再作成（delete + create）あり |
-| 3 | エラー |
+| Code | Meaning |
+|------|---------|
+| 0 | No changes, or order-only changes |
+| 1 | Actual Set attribute changes |
+| 2 | Resource replacement (delete + create) |
+| 3 | Error |
 
-## 出力フォーマット
+## Output Formats
 
-### Markdown（デフォルト）
+### Markdown (default)
 
-PRコメントやレポート向けの人間可読形式です。
+Human-readable format for PR comments and reports.
 
 ```bash
 python analyze_plan.py plan.json --format markdown
@@ -63,13 +63,13 @@ python analyze_plan.py plan.json --format markdown
 
 ### JSON
 
-プログラム処理向けの構造化データです。
+Structured data for programmatic processing.
 
 ```bash
 python analyze_plan.py plan.json --format json
 ```
 
-出力例:
+Example output:
 ```json
 {
   "summary": {
@@ -88,18 +88,18 @@ python analyze_plan.py plan.json --format json
 
 ### Summary
 
-CI/CD ログ向けの1行サマリーです。
+One-line summary for CI/CD logs.
 
 ```bash
 python analyze_plan.py plan.json --format summary
 ```
 
-出力例:
+Example output:
 ```
 🟢 3 order-only | 🟡 1 set changes | ℹ️ 2 other
 ```
 
-## CI/CD パイプラインでの使用
+## CI/CD Pipeline Usage
 
 ### GitHub Actions
 
@@ -136,13 +136,13 @@ jobs:
           path: analysis.md
 ```
 
-### GitHub Actions（終了コードでゲート）
+### GitHub Actions (Gate with Exit Code)
 
 ```yaml
       - name: Analyze and Gate
         run: |
           python path/to/analyze_plan.py plan.json --exit-code --format summary
-        # exit code 2 (resource replacement) で失敗させる場合
+        # Fail on exit code 2 (resource replacement)
         continue-on-error: false
 ```
 
@@ -165,47 +165,47 @@ jobs:
     artifactName: 'plan-analysis'
 ```
 
-### フィルタリング例
+### Filtering Examples
 
-特定のリソースのみ分析:
+Analyze only specific resources:
 ```bash
 python analyze_plan.py plan.json --include application_gateway --include load_balancer
 ```
 
-特定のリソースを除外:
+Exclude specific resources:
 ```bash
 python analyze_plan.py plan.json --exclude virtual_network
 ```
 
-## 判断の解釈
+## Interpreting Results
 
-| 分類 | 意味 | 推奨アクション |
-|------|------|---------------|
-| 🟢 順序変更のみ | 偽差分、実際の変更なし | 無視してOK |
-| 🟡 実際の変更 | Set要素の追加/削除/変更 | 内容を確認、通常はin-place更新 |
-| 🔴 リソース再作成 | delete + create | ダウンタイム影響を確認 |
-| ➕ 新規作成 | 新しいリソース | 意図した追加か確認 |
-| ➖ 削除 | リソース削除 | 意図した削除か確認 |
-| ℹ️ その他 | 非Set型属性の変更 | 通常のレビュー |
+| Category | Meaning | Recommended Action |
+|----------|---------|-------------------|
+| 🟢 Order-only | False-positive diff, no actual change | Safe to ignore |
+| 🟡 Actual change | Set element added/removed/modified | Review the content, usually in-place update |
+| 🔴 Resource replacement | delete + create | Check for downtime impact |
+| ➕ New resource | New resource being created | Verify it's intentional |
+| ➖ Deletion | Resource being deleted | Verify it's intentional |
+| ℹ️ Other | Non-Set-type attribute changes | Normal review |
 
-## カスタム属性定義
+## Custom Attribute Definitions
 
-デフォルトでは `references/azurerm_set_attributes.json` を使用しますが、カスタム定義ファイルを指定できます:
+By default, uses `references/azurerm_set_attributes.json`, but you can specify a custom definition file:
 
 ```bash
 python analyze_plan.py plan.json --attributes /path/to/custom_attributes.json
 ```
 
-定義ファイルの形式については `references/azurerm_set_attributes.md` を参照してください。
+See `references/azurerm_set_attributes.md` for the definition file format.
 
-## 制限事項
+## Limitations
 
-- AzureRM リソース（`azurerm_*`）のみが対象です
-- 一部のリソース/属性は未対応の場合があります
-- `after_unknown`（apply後に判明する値）を含む属性は比較が不完全になる場合があります
-- Sensitive 属性はマスクされているため、比較が不完全になる場合があります
+- Only AzureRM resources (`azurerm_*`) are supported
+- Some resources/attributes may not be supported
+- Comparisons may be incomplete for attributes containing `after_unknown` (values determined after apply)
+- Comparisons may be incomplete for sensitive attributes (they are masked)
 
-## 関連ドキュメント
+## Related Documentation
 
-- [SKILL.md](../SKILL.md) - Copilot CLI Skill としての使用方法
-- [azurerm_set_attributes.md](../references/azurerm_set_attributes.md) - 属性定義のリファレンス
+- [SKILL.md](../SKILL.md) - Usage as a Copilot CLI Skill
+- [azurerm_set_attributes.md](../references/azurerm_set_attributes.md) - Attribute definition reference

@@ -1,40 +1,40 @@
-# AzureRM Set型属性リファレンス
+# AzureRM Set-Type Attributes Reference
 
-このドキュメントは、`azurerm_set_attributes.json` の概要とメンテナンス方法を説明します。
+This document explains the overview and maintenance of `azurerm_set_attributes.json`.
 
-> **最終更新**: 2026年1月28日
+> **Last Updated**: January 28, 2026
 
-## 概要
+## Overview
 
-`azurerm_set_attributes.json` は、AzureRM ProviderでSet型として扱われる属性の定義ファイルです。
-`analyze_plan.py` スクリプトがこのJSONを読み込み、Terraform planの「偽差分」を識別します。
+`azurerm_set_attributes.json` is a definition file for attributes treated as Set-type in the AzureRM Provider.
+The `analyze_plan.py` script reads this JSON to identify "false-positive diffs" in Terraform plans.
 
-### Set型属性とは
+### What are Set-Type Attributes?
 
-Terraform の Set 型は**順序が保証されない**コレクションです。
-そのため、要素の追加・削除時に、変更のない要素も「変更」として表示されることがあります。
-これが「偽差分（false positive diff）」です。
+Terraform's Set type is a collection that **does not guarantee order**.
+Therefore, when adding or removing elements, unchanged elements may appear as "changed".
+This is called a "false-positive diff".
 
-## JSONファイルの構造
+## JSON File Structure
 
-### 基本形式
+### Basic Format
 
 ```json
 {
   "resources": {
     "azurerm_resource_type": {
-      "属性名": "キー属性"
+      "attribute_name": "key_attribute"
     }
   }
 }
 ```
 
-- **キー属性**: Set要素を一意に識別する属性（例: `name`, `id`）
-- **null**: キー属性がない場合（要素全体で比較）
+- **key_attribute**: The attribute that uniquely identifies Set elements (e.g., `name`, `id`)
+- **null**: When there is no key attribute (compare entire element)
 
-### ネスト形式
+### Nested Format
 
-Set属性の中にさらにSet属性がある場合：
+When a Set attribute contains another Set attribute:
 
 ```json
 {
@@ -49,15 +49,15 @@ Set属性の中にさらにSet属性がある場合：
 }
 ```
 
-- **`_key`**: その階層のSet要素のキー属性
-- **その他のキー**: ネストしたSet属性の定義
+- **`_key`**: The key attribute for that level's Set elements
+- **Other keys**: Definitions for nested Set attributes
 
-### 例: azurerm_application_gateway
+### Example: azurerm_application_gateway
 
 ```json
 "azurerm_application_gateway": {
-  "backend_address_pool": "name",           // 単純なSet（keyはname）
-  "rewrite_rule_set": {                     // ネストしたSet
+  "backend_address_pool": "name",           // Simple Set (key is name)
+  "rewrite_rule_set": {                     // Nested Set
     "_key": "name",
     "rewrite_rule": {
       "_key": "name",
@@ -67,79 +67,79 @@ Set属性の中にさらにSet属性がある場合：
 }
 ```
 
-## メンテナンス方法
+## Maintenance
 
-### 新しい属性を追加する
+### Adding New Attributes
 
-1. **公式ドキュメントで確認**
-   - [Terraform Registry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) でリソースを検索
-   - 属性が「Set of ...」と記載されているか確認
-   - `azurerm_application_gateway` のように Note に Set 属性が明記されている場合もある
+1. **Check Official Documentation**
+   - Search for the resource in [Terraform Registry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+   - Verify the attribute is listed as "Set of ..."
+   - Some resources like `azurerm_application_gateway` have Set attributes noted explicitly
 
-2. **ソースコードで確認（より確実）**
-   - [AzureRM Provider GitHub](https://github.com/hashicorp/terraform-provider-azurerm) でリソースを検索
-   - スキーマ定義で `Type: pluginsdk.TypeSet` を確認
-   - `Set` の `Schema` 内の属性で `_key` となりうる属性を特定
+2. **Check Source Code (more reliable)**
+   - Search for the resource in [AzureRM Provider GitHub](https://github.com/hashicorp/terraform-provider-azurerm)
+   - Confirm `Type: pluginsdk.TypeSet` in the schema definition
+   - Identify attributes within the Set's `Schema` that can serve as `_key`
 
-3. **JSONに追加**
+3. **Add to JSON**
    ```json
    "azurerm_new_resource": {
      "set_attribute": "key_attribute"
    }
    ```
 
-4. **テスト**
+4. **Test**
    ```bash
-   # 実際のplanで動作確認
+   # Verify with an actual plan
    python3 scripts/analyze_plan.py your_plan.json
    ```
 
-### キー属性の特定方法
+### Identifying Key Attributes
 
-| 一般的なキー属性 | 用途 |
-|----------------|------|
-| `name` | 名前付きブロック（最も一般的） |
-| `id` | リソースID参照 |
-| `location` | 地理的ロケーション |
-| `address` | ネットワークアドレス |
-| `host_name` | ホスト名 |
-| `null` | キーがない場合（要素全体で比較） |
+| Common Key Attribute | Usage |
+|---------------------|-------|
+| `name` | Named blocks (most common) |
+| `id` | Resource ID reference |
+| `location` | Geographic location |
+| `address` | Network address |
+| `host_name` | Hostname |
+| `null` | When no key exists (compare entire element) |
 
-## 関連ツール
+## Related Tools
 
 ### analyze_plan.py
 
-Terraform plan JSON を分析し、偽差分を識別します。
+Analyzes Terraform plan JSON to identify false-positive diffs.
 
 ```bash
-# 基本的な使い方
+# Basic usage
 terraform show -json plan.tfplan | python3 scripts/analyze_plan.py
 
-# ファイルから読み込み
+# Read from file
 python3 scripts/analyze_plan.py plan.json
 
-# カスタム属性ファイルを使用
+# Use custom attribute file
 python3 scripts/analyze_plan.py plan.json --attributes /path/to/custom.json
 ```
 
-## 対応リソース一覧
+## Supported Resources
 
-現在対応しているリソースは `azurerm_set_attributes.json` を直接参照してください：
+Please refer to `azurerm_set_attributes.json` directly for currently supported resources:
 
 ```bash
-# リソース一覧を表示
+# List resources
 jq '.resources | keys' azurerm_set_attributes.json
 ```
 
-主要なリソース：
-- `azurerm_application_gateway` - バックエンドプール、リスナー、ルールなど
-- `azurerm_firewall_policy_rule_collection_group` - ルールコレクション
-- `azurerm_frontdoor` - バックエンドプール、ルーティング
-- `azurerm_network_security_group` - セキュリティルール
-- `azurerm_virtual_network_gateway` - IP構成、VPNクライアント構成
+Key resources:
+- `azurerm_application_gateway` - Backend pools, listeners, rules, etc.
+- `azurerm_firewall_policy_rule_collection_group` - Rule collections
+- `azurerm_frontdoor` - Backend pools, routing
+- `azurerm_network_security_group` - Security rules
+- `azurerm_virtual_network_gateway` - IP configuration, VPN client configuration
 
-## 注意事項
+## Notes
 
-- Provider/APIバージョンによって属性の動作が異なる場合があります
-- 新しいリソースや属性は随時追加が必要です
-- ネスト構造が深い場合、すべての階層を定義することで精度が向上します
+- Attribute behavior may differ depending on Provider/API version
+- New resources and attributes need to be added as they become available
+- Defining all levels of deeply nested structures improves accuracy

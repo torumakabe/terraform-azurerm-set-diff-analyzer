@@ -488,29 +488,29 @@ def format_set_change(change: SetAttributeChange, indent: int = 0) -> List[str]:
     # Handle primitive sets
     if change.is_primitive:
         if change.primitive_added:
-            lines.append(f"{prefix}**追加:**")
+            lines.append(f"{prefix}**Added:**")
             for item in change.primitive_added:
                 lines.append(f"{prefix}  - {item}")
         if change.primitive_removed:
-            lines.append(f"{prefix}**削除:**")
+            lines.append(f"{prefix}**Removed:**")
             for item in change.primitive_removed:
                 lines.append(f"{prefix}  - {item}")
         if change.order_only_count > 0:
-            lines.append(f"{prefix}**順序変更のみ:** {change.order_only_count}要素")
+            lines.append(f"{prefix}**Order-only:** {change.order_only_count} elements")
         return lines
 
     if change.added:
-        lines.append(f"{prefix}**追加:**")
+        lines.append(f"{prefix}**Added:**")
         for item in change.added:
             lines.append(f"{prefix}  - {item}")
 
     if change.removed:
-        lines.append(f"{prefix}**削除:**")
+        lines.append(f"{prefix}**Removed:**")
         for item in change.removed:
             lines.append(f"{prefix}  - {item}")
 
     if change.modified:
-        lines.append(f"{prefix}**変更:**")
+        lines.append(f"{prefix}**Modified:**")
         for item_key, diffs in change.modified:
             lines.append(f"{prefix}  - {item_key}:")
             for diff_key, diff_val in diffs.items():
@@ -519,13 +519,13 @@ def format_set_change(change: SetAttributeChange, indent: int = 0) -> List[str]:
                 lines.append(f"{prefix}    - {diff_key}: {before_str} → {after_str}")
 
     if change.order_only_count > 0:
-        lines.append(f"{prefix}**順序変更のみ:** {change.order_only_count}要素")
+        lines.append(f"{prefix}**Order-only:** {change.order_only_count} elements")
 
     # Format nested changes
     for nested in change.nested_changes:
         if (nested.added or nested.removed or nested.modified or 
             nested.nested_changes or nested.primitive_added or nested.primitive_removed):
-            lines.append(f"{prefix}**ネスト属性 `{nested.attribute_name}`:**")
+            lines.append(f"{prefix}**Nested attribute `{nested.attribute_name}`:**")
             lines.extend(format_set_change(nested, indent + 1))
 
     return lines
@@ -533,8 +533,8 @@ def format_set_change(change: SetAttributeChange, indent: int = 0) -> List[str]:
 
 def format_markdown_output(result: AnalysisResult) -> str:
     """Format analysis results as Markdown."""
-    lines = ["# Terraform Plan 分析結果", ""]
-    lines.append("AzureRM Set型属性の変更を分析し、順序変更のみの「偽差分」を識別します。")
+    lines = ["# Terraform Plan Analysis Results", ""]
+    lines.append("Analyzes AzureRM Set-type attribute changes and identifies order-only \"false-positive diffs\".")
     lines.append("")
 
     # Categorize changes (including nested)
@@ -564,19 +564,19 @@ def format_markdown_output(result: AnalysisResult) -> str:
             other_changes.append((res.address, res.other_changes))
 
     # Section: Order-only changes (false positives)
-    lines.append("## 🟢 順序変更のみ（影響なし）")
+    lines.append("## 🟢 Order-only Changes (No Impact)")
     lines.append("")
     if order_only_changes:
-        lines.append("以下の変更は、Set型属性の内部的な並び替えのみで、実際のリソース変更はありません。")
+        lines.append("The following changes are internal reordering of Set-type attributes only, with no actual resource changes.")
         lines.append("")
         for address, name, change in order_only_changes:
-            lines.append(f"- `{address}`: **{name}** ({change.order_only_count}要素)")
+            lines.append(f"- `{address}`: **{name}** ({change.order_only_count} elements)")
     else:
-        lines.append("なし")
+        lines.append("None")
     lines.append("")
 
     # Section: Actual Set changes
-    lines.append("## 🟡 Set型属性の実際の変更")
+    lines.append("## 🟡 Actual Set Attribute Changes")
     lines.append("")
     if actual_set_changes:
         for address, name, change in actual_set_changes:
@@ -585,24 +585,24 @@ def format_markdown_output(result: AnalysisResult) -> str:
             lines.extend(format_set_change(change))
             lines.append("")
     else:
-        lines.append("なし")
+        lines.append("None")
     lines.append("")
 
     # Section: Resource replacements
-    lines.append("## 🔴 リソース再作成（要注意）")
+    lines.append("## 🔴 Resource Replacement (Caution)")
     lines.append("")
     if replace_resources:
-        lines.append("以下のリソースは削除後に再作成されます。ダウンタイムが発生する可能性があります。")
+        lines.append("The following resources will be deleted and recreated. This may cause downtime.")
         lines.append("")
         for res in replace_resources:
             lines.append(f"- `{res.address}`")
     else:
-        lines.append("なし")
+        lines.append("None")
     lines.append("")
 
     # Section: New resources
     if create_resources:
-        lines.append("## ➕ 新規作成リソース")
+        lines.append("## ➕ New Resources")
         lines.append("")
         for res in create_resources:
             lines.append(f"- `{res.address}`")
@@ -610,25 +610,25 @@ def format_markdown_output(result: AnalysisResult) -> str:
 
     # Section: Deleted resources
     if delete_resources:
-        lines.append("## ➖ 削除リソース")
+        lines.append("## ➖ Deleted Resources")
         lines.append("")
         for res in delete_resources:
             lines.append(f"- `{res.address}`")
         lines.append("")
 
     # Section: Other changes
-    lines.append("## ℹ️ その他の変更（非Set型属性）")
+    lines.append("## ℹ️ Other Changes (Non-Set Attributes)")
     lines.append("")
     if other_changes:
         for address, attrs in other_changes:
             lines.append(f"- `{address}`: {', '.join(attrs)}")
     else:
-        lines.append("なし")
+        lines.append("None")
     lines.append("")
 
     # Section: Warnings
     if result.warnings:
-        lines.append("## ⚠️ 警告")
+        lines.append("## ⚠️ Warnings")
         lines.append("")
         for warning in result.warnings:
             lines.append(f"- {warning}")
@@ -884,8 +884,8 @@ def main():
         elif args.format == "summary":
             print("✅ No changes detected")
         else:
-            print("# Terraform Plan 分析結果\n")
-            print("リソース変更はありません。")
+            print("# Terraform Plan Analysis Results\n")
+            print("No resource changes detected.")
         sys.exit(EXIT_NO_CHANGES)
 
     # Analyze the plan

@@ -94,7 +94,7 @@ ARM_SUBSCRIPTION_ID=<your-subscription-id> terraform destroy
 
 When you add/reorder Set-type attribute blocks:
 - `terraform plan` may show changes to existing elements (false positives)
-- Our analyzer will classify these as "🟢 順序変更のみ（影響なし）"
+- Our analyzer will classify these as "🟢 Order-only Changes (No Impact)"
 
 ## Cost Warning
 
