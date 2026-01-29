@@ -37,26 +37,34 @@ resource "azurerm_virtual_network" "test" {
   resource_group_name = azurerm_resource_group.test.name
   address_space       = ["10.0.0.0/16"]
 
-  # These subnets are Set-type attributes - order may change
-  subnet {
-    name             = "subnet-a"
-    address_prefixes = ["10.0.1.0/24"]
-  }
-
-  subnet {
-    name             = "subnet-b"
-    address_prefixes = ["10.0.2.0/24"]
-  }
-
-  subnet {
-    name             = "subnet-c"
-    address_prefixes = ["10.0.3.0/24"]
-  }
-
   tags = {
     environment = "test"
     purpose     = "set-diff-analyzer-test"
   }
+}
+
+# =============================================================================
+# Subnets (standalone resources to avoid inline/standalone conflict)
+# =============================================================================
+resource "azurerm_subnet" "a" {
+  name                 = "subnet-a"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+resource "azurerm_subnet" "b" {
+  name                 = "subnet-b"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
+  address_prefixes     = ["10.0.2.0/24"]
+}
+
+resource "azurerm_subnet" "c" {
+  name                 = "subnet-c"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
+  address_prefixes     = ["10.0.3.0/24"]
 }
 
 # =============================================================================
