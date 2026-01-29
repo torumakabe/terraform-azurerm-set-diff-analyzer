@@ -1,0 +1,74 @@
+{
+  "resource_changes": [
+    {
+      "address": "azurerm_firewall_policy_rule_collection_group.main",
+      "mode": "managed",
+      "type": "azurerm_firewall_policy_rule_collection_group",
+      "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "update"
+        ],
+        "before": {
+          "name": "fwpolicy-rcg",
+          "application_rule_collection": [
+            {
+              "name": "app-rules",
+              "priority": 100,
+              "action": "Allow",
+              "rule": [
+                {
+                  "name": "allow-google",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.google.com",
+                    "*.googleapis.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Https",
+                      "port": 443
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "after": {
+          "name": "fwpolicy-rcg",
+          "application_rule_collection": [
+            {
+              "name": "app-rules",
+              "priority": 100,
+              "action": "Allow",
+              "rule": [
+                {
+                  "name": "allow-google",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.googleapis.com",
+                    "*.google.com",
+                    "*.youtube.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Https",
+                      "port": 443
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "after_unknown": {}
+      }
+    }
+  ]
+}

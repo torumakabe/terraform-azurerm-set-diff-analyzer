@@ -1,0 +1,47 @@
+{
+  "resource_changes": [
+    {
+      "address": "azurerm_application_gateway.main",
+      "mode": "managed",
+      "type": "azurerm_application_gateway",
+      "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "update"
+        ],
+        "before": {
+          "name": "appgw-main",
+          "backend_http_settings": [
+            {
+              "name": "http-settings",
+              "protocol": "Http",
+              "port": 80
+            },
+            {
+              "name": "https-settings",
+              "protocol": "Https",
+              "port": 443
+            }
+          ]
+        },
+        "after": {
+          "name": "appgw-main",
+          "backend_http_settings": [
+            {
+              "name": "http-settings",
+              "protocol": "HTTP",
+              "port": 80
+            },
+            {
+              "name": "https-settings",
+              "protocol": "HTTPS",
+              "port": 443
+            }
+          ]
+        },
+        "after_unknown": {}
+      }
+    }
+  ]
+}

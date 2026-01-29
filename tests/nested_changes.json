@@ -1,233 +1,231 @@
 {
-    "format_version": "1.2",
-    "terraform_version": "1.5.0",
-    "resource_changes": [
-        {
-            "address": "azurerm_application_gateway.main",
-            "type": "azurerm_application_gateway",
-            "name": "main",
-            "change": {
-                "actions": [
-                    "update"
-                ],
-                "before": {
-                    "name": "appgw-test",
-                    "rewrite_rule_set": [
-                        {
-                            "name": "ruleset-1",
-                            "rewrite_rule": [
-                                {
-                                    "name": "rule-a",
-                                    "rule_sequence": 100,
-                                    "condition": [
-                                        {
-                                            "variable": "var_http_status",
-                                            "pattern": "200",
-                                            "ignore_case": true
-                                        },
-                                        {
-                                            "variable": "var_request_uri",
-                                            "pattern": "/api/*",
-                                            "ignore_case": false
-                                        }
-                                    ],
-                                    "request_header_configuration": [
-                                        {
-                                            "header_name": "X-Custom-Header",
-                                            "header_value": "old-value"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "name": "rule-b",
-                                    "rule_sequence": 200,
-                                    "condition": [],
-                                    "request_header_configuration": []
-                                }
-                            ]
-                        },
-                        {
-                            "name": "ruleset-2",
-                            "rewrite_rule": [
-                                {
-                                    "name": "rule-x",
-                                    "rule_sequence": 100,
-                                    "condition": [],
-                                    "request_header_configuration": []
-                                }
-                            ]
-                        }
-                    ]
+  "resource_changes": [
+    {
+      "address": "azurerm_application_gateway.main",
+      "type": "azurerm_application_gateway",
+      "name": "main",
+      "change": {
+        "actions": [
+          "update"
+        ],
+        "before": {
+          "name": "appgw-test",
+          "rewrite_rule_set": [
+            {
+              "name": "ruleset-1",
+              "rewrite_rule": [
+                {
+                  "name": "rule-a",
+                  "rule_sequence": 100,
+                  "condition": [
+                    {
+                      "variable": "var_http_status",
+                      "pattern": "200",
+                      "ignore_case": true
+                    },
+                    {
+                      "variable": "var_request_uri",
+                      "pattern": "/api/*",
+                      "ignore_case": false
+                    }
+                  ],
+                  "request_header_configuration": [
+                    {
+                      "header_name": "X-Custom-Header",
+                      "header_value": "old-value"
+                    }
+                  ]
                 },
-                "after": {
-                    "name": "appgw-test",
-                    "rewrite_rule_set": [
-                        {
-                            "name": "ruleset-2",
-                            "rewrite_rule": [
-                                {
-                                    "name": "rule-x",
-                                    "rule_sequence": 100,
-                                    "condition": [],
-                                    "request_header_configuration": []
-                                }
-                            ]
-                        },
-                        {
-                            "name": "ruleset-1",
-                            "rewrite_rule": [
-                                {
-                                    "name": "rule-b",
-                                    "rule_sequence": 200,
-                                    "condition": [],
-                                    "request_header_configuration": []
-                                },
-                                {
-                                    "name": "rule-a",
-                                    "rule_sequence": 100,
-                                    "condition": [
-                                        {
-                                            "variable": "var_request_uri",
-                                            "pattern": "/api/*",
-                                            "ignore_case": false
-                                        },
-                                        {
-                                            "variable": "var_http_status",
-                                            "pattern": "200",
-                                            "ignore_case": true
-                                        }
-                                    ],
-                                    "request_header_configuration": [
-                                        {
-                                            "header_name": "X-Custom-Header",
-                                            "header_value": "new-value"
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
+                {
+                  "name": "rule-b",
+                  "rule_sequence": 200,
+                  "condition": [],
+                  "request_header_configuration": []
                 }
+              ]
+            },
+            {
+              "name": "ruleset-2",
+              "rewrite_rule": [
+                {
+                  "name": "rule-x",
+                  "rule_sequence": 100,
+                  "condition": [],
+                  "request_header_configuration": []
+                }
+              ]
             }
+          ]
         },
-        {
-            "address": "azurerm_firewall_policy_rule_collection_group.main",
-            "type": "azurerm_firewall_policy_rule_collection_group",
-            "name": "main",
-            "change": {
-                "actions": [
-                    "update"
-                ],
-                "before": {
-                    "name": "fwpolicy-rcg",
-                    "application_rule_collection": [
-                        {
-                            "name": "app-rules",
-                            "priority": 100,
-                            "action": "Allow",
-                            "rule": [
-                                {
-                                    "name": "allow-google",
-                                    "source_addresses": [
-                                        "10.0.0.0/8"
-                                    ],
-                                    "destination_fqdns": [
-                                        "*.google.com",
-                                        "*.googleapis.com"
-                                    ],
-                                    "protocols": [
-                                        {
-                                            "type": "Https",
-                                            "port": 443
-                                        }
-                                    ]
-                                },
-                                {
-                                    "name": "allow-microsoft",
-                                    "source_addresses": [
-                                        "10.0.0.0/8"
-                                    ],
-                                    "destination_fqdns": [
-                                        "*.microsoft.com"
-                                    ],
-                                    "protocols": [
-                                        {
-                                            "type": "Https",
-                                            "port": 443
-                                        },
-                                        {
-                                            "type": "Http",
-                                            "port": 80
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "after": {
-                    "name": "fwpolicy-rcg",
-                    "application_rule_collection": [
-                        {
-                            "name": "app-rules",
-                            "priority": 100,
-                            "action": "Allow",
-                            "rule": [
-                                {
-                                    "name": "allow-microsoft",
-                                    "source_addresses": [
-                                        "10.0.0.0/8"
-                                    ],
-                                    "destination_fqdns": [
-                                        "*.microsoft.com"
-                                    ],
-                                    "protocols": [
-                                        {
-                                            "type": "Http",
-                                            "port": 80
-                                        },
-                                        {
-                                            "type": "Https",
-                                            "port": 443
-                                        }
-                                    ]
-                                },
-                                {
-                                    "name": "allow-google",
-                                    "source_addresses": [
-                                        "10.0.0.0/8"
-                                    ],
-                                    "destination_fqdns": [
-                                        "*.google.com",
-                                        "*.googleapis.com"
-                                    ],
-                                    "protocols": [
-                                        {
-                                            "type": "Https",
-                                            "port": 443
-                                        }
-                                    ]
-                                },
-                                {
-                                    "name": "allow-azure",
-                                    "source_addresses": [
-                                        "10.0.0.0/8"
-                                    ],
-                                    "destination_fqdns": [
-                                        "*.azure.com"
-                                    ],
-                                    "protocols": [
-                                        {
-                                            "type": "Https",
-                                            "port": 443
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
+        "after": {
+          "name": "appgw-test",
+          "rewrite_rule_set": [
+            {
+              "name": "ruleset-2",
+              "rewrite_rule": [
+                {
+                  "name": "rule-x",
+                  "rule_sequence": 100,
+                  "condition": [],
+                  "request_header_configuration": []
                 }
+              ]
+            },
+            {
+              "name": "ruleset-1",
+              "rewrite_rule": [
+                {
+                  "name": "rule-b",
+                  "rule_sequence": 200,
+                  "condition": [],
+                  "request_header_configuration": []
+                },
+                {
+                  "name": "rule-a",
+                  "rule_sequence": 100,
+                  "condition": [
+                    {
+                      "variable": "var_request_uri",
+                      "pattern": "/api/*",
+                      "ignore_case": false
+                    },
+                    {
+                      "variable": "var_http_status",
+                      "pattern": "200",
+                      "ignore_case": true
+                    }
+                  ],
+                  "request_header_configuration": [
+                    {
+                      "header_name": "X-Custom-Header",
+                      "header_value": "new-value"
+                    }
+                  ]
+                }
+              ]
             }
+          ]
         }
-    ]
+      }
+    },
+    {
+      "address": "azurerm_firewall_policy_rule_collection_group.main",
+      "type": "azurerm_firewall_policy_rule_collection_group",
+      "name": "main",
+      "change": {
+        "actions": [
+          "update"
+        ],
+        "before": {
+          "name": "fwpolicy-rcg",
+          "application_rule_collection": [
+            {
+              "name": "app-rules",
+              "priority": 100,
+              "action": "Allow",
+              "rule": [
+                {
+                  "name": "allow-google",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.google.com",
+                    "*.googleapis.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Https",
+                      "port": 443
+                    }
+                  ]
+                },
+                {
+                  "name": "allow-microsoft",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.microsoft.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Https",
+                      "port": 443
+                    },
+                    {
+                      "type": "Http",
+                      "port": 80
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "after": {
+          "name": "fwpolicy-rcg",
+          "application_rule_collection": [
+            {
+              "name": "app-rules",
+              "priority": 100,
+              "action": "Allow",
+              "rule": [
+                {
+                  "name": "allow-microsoft",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.microsoft.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Http",
+                      "port": 80
+                    },
+                    {
+                      "type": "Https",
+                      "port": 443
+                    }
+                  ]
+                },
+                {
+                  "name": "allow-google",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.google.com",
+                    "*.googleapis.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Https",
+                      "port": 443
+                    }
+                  ]
+                },
+                {
+                  "name": "allow-azure",
+                  "source_addresses": [
+                    "10.0.0.0/8"
+                  ],
+                  "destination_fqdns": [
+                    "*.azure.com"
+                  ],
+                  "protocols": [
+                    {
+                      "type": "Https",
+                      "port": 443
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
 }

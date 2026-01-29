@@ -1,0 +1,122 @@
+{
+    "format_version": "1.2",
+    "terraform_version": "1.6.0",
+    "resource_changes": [
+        {
+            "address": "azurerm_virtual_network_gateway.vpn",
+            "mode": "managed",
+            "type": "azurerm_virtual_network_gateway",
+            "name": "vpn",
+            "provider_name": "registry.terraform.io/hashicorp/azurerm",
+            "change": {
+                "actions": [
+                    "delete",
+                    "create"
+                ],
+                "before": {
+                    "name": "vgw-prod",
+                    "location": "japaneast",
+                    "resource_group_name": "rg-network",
+                    "type": "Vpn",
+                    "vpn_type": "RouteBased",
+                    "active_active": false,
+                    "enable_bgp": false,
+                    "sku": "VpnGw1",
+                    "ip_configuration": [
+                        {
+                            "name": "vnetGatewayConfig",
+                            "private_ip_address_allocation": "Dynamic",
+                            "subnet_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-hub/subnets/GatewaySubnet",
+                            "public_ip_address_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-network/providers/Microsoft.Network/publicIPAddresses/pip-vgw-1"
+                        }
+                    ],
+                    "vpn_client_configuration": [
+                        {
+                            "address_space": [
+                                "172.16.0.0/24"
+                            ],
+                            "vpn_client_protocols": [
+                                "OpenVPN",
+                                "IkeV2"
+                            ],
+                            "root_certificate": [
+                                {
+                                    "name": "root-cert-1",
+                                    "public_cert_data": "MIIC5jCCAc6gAwIBAgIQTest..."
+                                },
+                                {
+                                    "name": "root-cert-2",
+                                    "public_cert_data": "MIIC6jCCAc7gAwIBAgIQProd..."
+                                }
+                            ]
+                        }
+                    ],
+                    "tags": {
+                        "environment": "production"
+                    }
+                },
+                "after": {
+                    "name": "vgw-prod",
+                    "location": "japaneast",
+                    "resource_group_name": "rg-network",
+                    "type": "Vpn",
+                    "vpn_type": "RouteBased",
+                    "active_active": true,
+                    "enable_bgp": false,
+                    "sku": "VpnGw1",
+                    "ip_configuration": [
+                        {
+                            "name": "vnetGatewayConfig",
+                            "private_ip_address_allocation": "Dynamic",
+                            "subnet_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-hub/subnets/GatewaySubnet",
+                            "public_ip_address_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-network/providers/Microsoft.Network/publicIPAddresses/pip-vgw-1"
+                        },
+                        {
+                            "name": "vnetGatewayConfig2",
+                            "private_ip_address_allocation": "Dynamic",
+                            "subnet_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-hub/subnets/GatewaySubnet",
+                            "public_ip_address_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-network/providers/Microsoft.Network/publicIPAddresses/pip-vgw-2"
+                        }
+                    ],
+                    "vpn_client_configuration": [
+                        {
+                            "address_space": [
+                                "172.16.0.0/24"
+                            ],
+                            "vpn_client_protocols": [
+                                "IkeV2",
+                                "OpenVPN"
+                            ],
+                            "root_certificate": [
+                                {
+                                    "name": "root-cert-2",
+                                    "public_cert_data": "MIIC6jCCAc7gAwIBAgIQProd..."
+                                },
+                                {
+                                    "name": "root-cert-1",
+                                    "public_cert_data": "MIIC5jCCAc6gAwIBAgIQTest..."
+                                }
+                            ]
+                        }
+                    ],
+                    "tags": {
+                        "environment": "production"
+                    }
+                },
+                "after_unknown": {
+                    "id": true,
+                    "ip_configuration": {
+                        "0": {
+                            "id": true
+                        },
+                        "1": {
+                            "id": true
+                        }
+                    }
+                },
+                "before_sensitive": {},
+                "after_sensitive": {}
+            }
+        }
+    ]
+}
