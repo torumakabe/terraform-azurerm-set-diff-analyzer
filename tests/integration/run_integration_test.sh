@@ -12,7 +12,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-ANALYZER="$REPO_ROOT/.github/skills/azurerm-set-diff-analyzer/scripts/analyze_plan.py"
+ANALYZER="$REPO_ROOT/.github/skills/terraform-azurerm-set-diff-analyzer/scripts/analyze_plan.py"
 MAIN_TF="$SCRIPT_DIR/main.tf"
 MAIN_TF_BACKUP="$SCRIPT_DIR/main.tf.backup"
 

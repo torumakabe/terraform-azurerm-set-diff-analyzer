@@ -1,4 +1,4 @@
-# Integration Test for AzureRM Set Diff Analyzer
+# Integration Test for Terraform AzureRM Set Diff Analyzer
 
 This directory contains Terraform configurations to test the analyzer with real Azure resources.
 
@@ -81,7 +81,7 @@ ARM_SUBSCRIPTION_ID=<your-subscription-id> terraform plan -out=plan.tfplan
 terraform show -json plan.tfplan > plan.json
 
 # Analyze with our tool
-python3 ../../.github/skills/azurerm-set-diff-analyzer/scripts/analyze_plan.py plan.json
+python3 ../../.github/skills/terraform-azurerm-set-diff-analyzer/scripts/analyze_plan.py plan.json
 ```
 
 ### Step 4: Clean Up

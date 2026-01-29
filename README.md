@@ -1,8 +1,8 @@
-# AzureRM Set Diff Analyzer
+# Terraform AzureRM Set Diff Analyzer
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A GitHub Copilot CLI Skill that analyzes Terraform plan JSON output for AzureRM Provider to distinguish between false-positive diffs (order-only changes in Set-type attributes) and actual resource changes.
+An Agent Skill that analyzes Terraform plan JSON output for the AzureRM Provider to distinguish between false-positive diffs (order-only changes in Set-type attributes) and actual resource changes.
 
 ## The Problem
 
@@ -22,12 +22,12 @@ This analyzer identifies and categorizes changes in Set-type attributes:
 
 ## Installation
 
-### As a Copilot CLI Skill
+### As an Agent Skill
 
 Copy the skill folder to your repository:
 
 ```bash
-cp -r .github/skills/azurerm-set-diff-analyzer <your-repo>/.github/skills/
+cp -r .github/skills/terraform-azurerm-set-diff-analyzer <your-repo>/.github/skills/
 ```
 
 ### As a Standalone Tool
@@ -37,7 +37,7 @@ cp -r .github/skills/azurerm-set-diff-analyzer <your-repo>/.github/skills/
 git clone https://github.com/torumakabe/terraform-azurerm-set-diff-analyzer.git
 
 # Run the analyzer
-python3 .github/skills/azurerm-set-diff-analyzer/scripts/analyze_plan.py plan.json
+python3 .github/skills/terraform-azurerm-set-diff-analyzer/scripts/analyze_plan.py plan.json
 ```
 
 ## Quick Start
@@ -48,14 +48,14 @@ terraform plan -out=plan.tfplan
 terraform show -json plan.tfplan > plan.json
 
 # 2. Analyze
-python3 .github/skills/azurerm-set-diff-analyzer/scripts/analyze_plan.py plan.json
+python3 .github/skills/terraform-azurerm-set-diff-analyzer/scripts/analyze_plan.py plan.json
 ```
 
 ## Documentation
 
-- **[SKILL.md](.github/skills/azurerm-set-diff-analyzer/SKILL.md)** - Copilot CLI Skill overview
-- **[scripts/README.md](.github/skills/azurerm-set-diff-analyzer/scripts/README.md)** - Full options, output formats, exit codes, CI/CD examples
-- **[references/azurerm_set_attributes.md](.github/skills/azurerm-set-diff-analyzer/references/azurerm_set_attributes.md)** - Supported resources and attributes
+- **[SKILL.md](.github/skills/terraform-azurerm-set-diff-analyzer/SKILL.md)** - Skill overview
+- **[scripts/README.md](.github/skills/terraform-azurerm-set-diff-analyzer/scripts/README.md)** - Full options, output formats, exit codes, CI/CD examples
+- **[references/azurerm_set_attributes.md](.github/skills/terraform-azurerm-set-diff-analyzer/references/azurerm_set_attributes.md)** - Supported resources and attributes
 
 ## Supported Resources
 
@@ -66,7 +66,7 @@ Key AzureRM resources with Set-type attributes:
 - `azurerm_frontdoor` - Backend pools, routing
 - `azurerm_network_security_group` - Security rules
 - `azurerm_virtual_network_gateway` - IP configuration, VPN client configuration
-- And more... (see [azurerm_set_attributes.json](.github/skills/azurerm-set-diff-analyzer/references/azurerm_set_attributes.json))
+- And more... (see [azurerm_set_attributes.json](.github/skills/terraform-azurerm-set-diff-analyzer/references/azurerm_set_attributes.json))
 
 ## Testing
 
@@ -84,10 +84,6 @@ cd tests/integration && ./run_integration_test.sh
 ```
 
 See [tests/integration/README.md](tests/integration/README.md) for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

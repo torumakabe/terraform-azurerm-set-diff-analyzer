@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 # Add scripts directory to path
-SCRIPTS_DIR = Path(__file__).parent.parent / ".github" / "skills" / "azurerm-set-diff-analyzer" / "scripts"
+SCRIPTS_DIR = Path(__file__).parent.parent / ".github" / "skills" / "terraform-azurerm-set-diff-analyzer" / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import analyze_plan as ap
@@ -208,12 +208,6 @@ class TestAnalyzePlan:
         plan = load_test_plan("primitive_set.json")
         result = analyze_plan(plan)
         assert result.actual_set_changes_count > 0
-    
-    def test_create_delete(self):
-        plan = load_test_plan("create_delete.json")
-        result = analyze_plan(plan)
-        assert result.create_count == 1
-        assert result.delete_count == 1
     
     def test_case_sensitivity(self):
         plan = load_test_plan("case_sensitivity.json")

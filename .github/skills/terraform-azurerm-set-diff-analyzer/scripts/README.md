@@ -1,4 +1,4 @@
-# AzureRM Set Diff Analyzer Script
+# Terraform AzureRM Set Diff Analyzer Script
 
 A Python script that analyzes Terraform plan JSON and identifies "false-positive diffs" in AzureRM Set-type attributes.
 
@@ -8,7 +8,7 @@ AzureRM Provider's Set-type attributes (such as `backend_address_pool`, `securit
 
 ### Use Cases
 
-- As a **Copilot CLI Skill** (recommended)
+- As an **Agent Skill** (recommended)
 - As a **CLI tool** for manual execution
 - For automated analysis in **CI/CD pipelines**
 
@@ -75,10 +75,7 @@ Example output:
   "summary": {
     "order_only_count": 3,
     "actual_set_changes_count": 1,
-    "replace_count": 0,
-    "create_count": 0,
-    "delete_count": 0,
-    "other_changes_count": 2
+    "replace_count": 0
   },
   "has_real_changes": true,
   "resources": [...],
@@ -96,7 +93,7 @@ python analyze_plan.py plan.json --format summary
 
 Example output:
 ```
-🟢 3 order-only | 🟡 1 set changes | ℹ️ 2 other
+🟢 3 order-only | 🟡 1 set changes
 ```
 
 ## CI/CD Pipeline Usage
@@ -184,9 +181,6 @@ python analyze_plan.py plan.json --exclude virtual_network
 | 🟢 Order-only | False-positive diff, no actual change | Safe to ignore |
 | 🟡 Actual change | Set element added/removed/modified | Review the content, usually in-place update |
 | 🔴 Resource replacement | delete + create | Check for downtime impact |
-| ➕ New resource | New resource being created | Verify it's intentional |
-| ➖ Deletion | Resource being deleted | Verify it's intentional |
-| ℹ️ Other | Non-Set-type attribute changes | Normal review |
 
 ## Custom Attribute Definitions
 
@@ -207,5 +201,5 @@ See `references/azurerm_set_attributes.md` for the definition file format.
 
 ## Related Documentation
 
-- [SKILL.md](../SKILL.md) - Usage as a Copilot CLI Skill
+- [SKILL.md](../SKILL.md) - Usage as an Agent Skill
 - [azurerm_set_attributes.md](../references/azurerm_set_attributes.md) - Attribute definition reference

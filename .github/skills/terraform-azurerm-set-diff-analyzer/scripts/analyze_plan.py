@@ -32,15 +32,20 @@ EXIT_RESOURCE_REPLACE = 2  # Resource replacement (most severe)
 EXIT_ERROR = 3
 
 # Default path to the external attributes JSON file (relative to this script)
-DEFAULT_ATTRIBUTES_PATH = Path(__file__).parent.parent / "references" / "azurerm_set_attributes.json"
+DEFAULT_ATTRIBUTES_PATH = (
+    Path(__file__).parent.parent / "references" / "azurerm_set_attributes.json"
+)
+
 
 # Global configuration
 class Config:
     """Global configuration for the analyzer."""
+
     ignore_case: bool = False
     quiet: bool = False
     verbose: bool = False
     warnings: List[str] = []
+
 
 CONFIG = Config()
 
@@ -95,8 +100,11 @@ def get_attr_config(attr_def: Any) -> tuple:
 @dataclass
 class SetAttributeChange:
     """Represents a change in a Set-type attribute."""
+
     attribute_name: str
-    path: str = ""  # Full path for nested attributes (e.g., "rewrite_rule_set.rewrite_rule")
+    path: str = (
+        ""  # Full path for nested attributes (e.g., "rewrite_rule_set.rewrite_rule")
+    )
     order_only_count: int = 0
     added: List[str] = field(default_factory=list)
     removed: List[str] = field(default_factory=list)
@@ -111,6 +119,7 @@ class SetAttributeChange:
 @dataclass
 class ResourceChange:
     """Represents changes to a single resource."""
+
     address: str
     resource_type: str
     actions: List[str] = field(default_factory=list)
@@ -124,6 +133,7 @@ class ResourceChange:
 @dataclass
 class AnalysisResult:
     """Overall analysis result."""
+
     resources: List[ResourceChange] = field(default_factory=list)
     order_only_count: int = 0
     actual_set_changes_count: int = 0
@@ -171,9 +181,7 @@ def values_equivalent(before_val: Any, after_val: Any) -> bool:
 
 
 def compare_elements(
-    before: Dict[str, Any],
-    after: Dict[str, Any],
-    nested_attrs: Dict[str, Any] = None
+    before: Dict[str, Any], after: Dict[str, Any], nested_attrs: Dict[str, Any] = None
 ) -> tuple:
     """
     Compare two elements and return (simple_diffs, nested_set_attrs).
@@ -209,7 +217,9 @@ def analyze_primitive_set(
 ) -> SetAttributeChange:
     """Analyze changes in a primitive Set (string/number array)."""
     full_path = f"{path}.{attr_name}" if path else attr_name
-    change = SetAttributeChange(attribute_name=attr_name, path=full_path, is_primitive=True)
+    change = SetAttributeChange(
+        attribute_name=attr_name, path=full_path, is_primitive=True
+    )
 
     before_set = set(before_list) if before_list else set()
     after_set = set(after_list) if after_list else set()
@@ -262,9 +272,13 @@ def analyze_set_attribute(
         after_list = [after_list] if after_list else []
 
     # Check if this is a primitive set (non-dict elements)
-    has_primitive_before = any(not isinstance(e, dict) for e in before_list if e is not None)
-    has_primitive_after = any(not isinstance(e, dict) for e in after_list if e is not None)
-    
+    has_primitive_before = any(
+        not isinstance(e, dict) for e in before_list if e is not None
+    )
+    has_primitive_after = any(
+        not isinstance(e, dict) for e in after_list if e is not None
+    )
+
     if has_primitive_before or has_primitive_after:
         # Handle primitive sets
         return analyze_primitive_set(before_list, after_list, attr_name, path)
@@ -272,7 +286,7 @@ def analyze_set_attribute(
     # Build maps keyed by the key attribute
     before_map: Dict[str, Dict[str, Any]] = {}
     after_map: Dict[str, Dict[str, Any]] = {}
-    
+
     # Detect duplicate keys
     for e in before_list:
         if isinstance(e, dict):
@@ -280,7 +294,7 @@ def analyze_set_attribute(
             if key in before_map:
                 warn(f"Duplicate key '{key}' in before state for {full_path}")
             before_map[key] = e
-    
+
     for e in after_list:
         if isinstance(e, dict):
             key = get_element_key(e, key_attr)
@@ -311,22 +325,30 @@ def analyze_set_attribute(
             change.order_only_count += 1
         else:
             # Content changed - check for meaningful differences
-            simple_diffs, nested_set_list = compare_elements(before_elem, after_elem, nested_attrs)
+            simple_diffs, nested_set_list = compare_elements(
+                before_elem, after_elem, nested_attrs
+            )
 
             # Process nested Set attributes recursively
             for nested_name, nested_before, nested_after, nested_def in nested_set_list:
                 nested_key, sub_nested = get_attr_config(nested_def)
                 nested_change = analyze_set_attribute(
-                    nested_before, nested_after, nested_key, nested_name,
-                    sub_nested, full_path
+                    nested_before,
+                    nested_after,
+                    nested_key,
+                    nested_name,
+                    sub_nested,
+                    full_path,
                 )
-                if (nested_change.order_only_count > 0 or
-                    nested_change.added or
-                    nested_change.removed or
-                    nested_change.modified or
-                    nested_change.nested_changes or
-                    nested_change.primitive_added or
-                    nested_change.primitive_removed):
+                if (
+                    nested_change.order_only_count > 0
+                    or nested_change.added
+                    or nested_change.removed
+                    or nested_change.modified
+                    or nested_change.nested_changes
+                    or nested_change.primitive_added
+                    or nested_change.primitive_removed
+                ):
                     change.nested_changes.append(nested_change)
 
             if simple_diffs:
@@ -399,7 +421,9 @@ def analyze_resource_change(
         # Warn about sensitive attributes
         if attr_name in before_sensitive or attr_name in after_sensitive:
             if before_sensitive.get(attr_name) or after_sensitive.get(attr_name):
-                warn(f"Attribute '{attr_name}' in {address} contains sensitive values (comparison may be incomplete)")
+                warn(
+                    f"Attribute '{attr_name}' in {address} contains sensitive values (comparison may be incomplete)"
+                )
 
         # Skip if attribute is not present or unchanged
         if before_val is None and after_val is None:
@@ -418,18 +442,24 @@ def analyze_resource_change(
         attr_after_unknown = after_unknown.get(attr_name)
 
         set_change = analyze_set_attribute(
-            before_val, after_val, key_attr, attr_name, nested_attrs,
-            after_unknown=attr_after_unknown
+            before_val,
+            after_val,
+            key_attr,
+            attr_name,
+            nested_attrs,
+            after_unknown=attr_after_unknown,
         )
 
         # Only include if there are actual findings
-        if (set_change.order_only_count > 0 or
-            set_change.added or
-            set_change.removed or
-            set_change.modified or
-            set_change.nested_changes or
-            set_change.primitive_added or
-            set_change.primitive_removed):
+        if (
+            set_change.order_only_count > 0
+            or set_change.added
+            or set_change.removed
+            or set_change.modified
+            or set_change.nested_changes
+            or set_change.primitive_added
+            or set_change.primitive_removed
+        ):
             result.set_changes.append(set_change)
             analyzed_attrs.add(attr_name)
 
@@ -456,14 +486,16 @@ def collect_all_changes(set_change: SetAttributeChange, prefix: str = "") -> tup
     order_only = []
     actual = []
 
-    display_name = f"{prefix}{set_change.attribute_name}" if prefix else set_change.attribute_name
+    display_name = (
+        f"{prefix}{set_change.attribute_name}" if prefix else set_change.attribute_name
+    )
 
     has_actual_change = (
-        set_change.added or
-        set_change.removed or
-        set_change.modified or
-        set_change.primitive_added or
-        set_change.primitive_removed
+        set_change.added
+        or set_change.removed
+        or set_change.modified
+        or set_change.primitive_added
+        or set_change.primitive_removed
     )
 
     if set_change.order_only_count > 0 and not has_actual_change:
@@ -523,8 +555,14 @@ def format_set_change(change: SetAttributeChange, indent: int = 0) -> List[str]:
 
     # Format nested changes
     for nested in change.nested_changes:
-        if (nested.added or nested.removed or nested.modified or 
-            nested.nested_changes or nested.primitive_added or nested.primitive_removed):
+        if (
+            nested.added
+            or nested.removed
+            or nested.modified
+            or nested.nested_changes
+            or nested.primitive_added
+            or nested.primitive_removed
+        ):
             lines.append(f"{prefix}**Nested attribute `{nested.attribute_name}`:**")
             lines.extend(format_set_change(nested, indent + 1))
 
@@ -534,7 +572,9 @@ def format_set_change(change: SetAttributeChange, indent: int = 0) -> List[str]:
 def format_markdown_output(result: AnalysisResult) -> str:
     """Format analysis results as Markdown."""
     lines = ["# Terraform Plan Analysis Results", ""]
-    lines.append("Analyzes AzureRM Set-type attribute changes and identifies order-only \"false-positive diffs\".")
+    lines.append(
+        'Analyzes AzureRM Set-type attribute changes and identifies order-only "false-positive diffs".'
+    )
     lines.append("")
 
     # Categorize changes (including nested)
@@ -567,10 +607,14 @@ def format_markdown_output(result: AnalysisResult) -> str:
     lines.append("## 🟢 Order-only Changes (No Impact)")
     lines.append("")
     if order_only_changes:
-        lines.append("The following changes are internal reordering of Set-type attributes only, with no actual resource changes.")
+        lines.append(
+            "The following changes are internal reordering of Set-type attributes only, with no actual resource changes."
+        )
         lines.append("")
         for address, name, change in order_only_changes:
-            lines.append(f"- `{address}`: **{name}** ({change.order_only_count} elements)")
+            lines.append(
+                f"- `{address}`: **{name}** ({change.order_only_count} elements)"
+            )
     else:
         lines.append("None")
     lines.append("")
@@ -592,36 +636,12 @@ def format_markdown_output(result: AnalysisResult) -> str:
     lines.append("## 🔴 Resource Replacement (Caution)")
     lines.append("")
     if replace_resources:
-        lines.append("The following resources will be deleted and recreated. This may cause downtime.")
+        lines.append(
+            "The following resources will be deleted and recreated. This may cause downtime."
+        )
         lines.append("")
         for res in replace_resources:
             lines.append(f"- `{res.address}`")
-    else:
-        lines.append("None")
-    lines.append("")
-
-    # Section: New resources
-    if create_resources:
-        lines.append("## ➕ New Resources")
-        lines.append("")
-        for res in create_resources:
-            lines.append(f"- `{res.address}`")
-        lines.append("")
-
-    # Section: Deleted resources
-    if delete_resources:
-        lines.append("## ➖ Deleted Resources")
-        lines.append("")
-        for res in delete_resources:
-            lines.append(f"- `{res.address}`")
-        lines.append("")
-
-    # Section: Other changes
-    lines.append("## ℹ️ Other Changes (Non-Set Attributes)")
-    lines.append("")
-    if other_changes:
-        for address, attrs in other_changes:
-            lines.append(f"- `{address}`: {', '.join(attrs)}")
     else:
         lines.append("None")
     lines.append("")
@@ -639,6 +659,7 @@ def format_markdown_output(result: AnalysisResult) -> str:
 
 def format_json_output(result: AnalysisResult) -> str:
     """Format analysis results as JSON."""
+
     def set_change_to_dict(change: SetAttributeChange) -> dict:
         d = {
             "attribute_name": change.attribute_name,
@@ -682,11 +703,11 @@ def format_json_output(result: AnalysisResult) -> str:
             "other_changes_count": result.other_changes_count,
         },
         "has_real_changes": (
-            result.actual_set_changes_count > 0 or
-            result.replace_count > 0 or
-            result.create_count > 0 or
-            result.delete_count > 0 or
-            result.other_changes_count > 0
+            result.actual_set_changes_count > 0
+            or result.replace_count > 0
+            or result.create_count > 0
+            or result.delete_count > 0
+            or result.other_changes_count > 0
         ),
         "resources": [resource_to_dict(r) for r in result.resources],
         "warnings": result.warnings,
@@ -697,23 +718,17 @@ def format_json_output(result: AnalysisResult) -> str:
 def format_summary_output(result: AnalysisResult) -> str:
     """Format analysis results as a single-line summary."""
     parts = []
-    
+
     if result.order_only_count > 0:
         parts.append(f"🟢 {result.order_only_count} order-only")
     if result.actual_set_changes_count > 0:
         parts.append(f"🟡 {result.actual_set_changes_count} set changes")
     if result.replace_count > 0:
         parts.append(f"🔴 {result.replace_count} replacements")
-    if result.create_count > 0:
-        parts.append(f"➕ {result.create_count} creates")
-    if result.delete_count > 0:
-        parts.append(f"➖ {result.delete_count} deletes")
-    if result.other_changes_count > 0:
-        parts.append(f"ℹ️ {result.other_changes_count} other")
-    
+
     if not parts:
         return "✅ No changes detected"
-    
+
     return " | ".join(parts)
 
 
@@ -724,14 +739,14 @@ def analyze_plan(
 ) -> AnalysisResult:
     """Analyze a terraform plan JSON and return results."""
     result = AnalysisResult()
-    
+
     resource_changes = plan_json.get("resource_changes", [])
-    
+
     for rc in resource_changes:
         res = analyze_resource_change(rc, include_filter, exclude_filter)
         if res:
             result.resources.append(res)
-            
+
             # Count statistics
             if res.is_replace:
                 result.replace_count += 1
@@ -739,18 +754,18 @@ def analyze_plan(
                 result.create_count += 1
             elif res.is_delete:
                 result.delete_count += 1
-            
+
             if res.other_changes:
                 result.other_changes_count += len(res.other_changes)
-            
+
             for set_change in res.set_changes:
                 order_only, actual = collect_all_changes(set_change)
                 result.order_only_count += len(order_only)
                 result.actual_set_changes_count += len(actual)
-    
+
     # Add warnings from global config
     result.warnings = CONFIG.warnings.copy()
-    
+
     return result
 
 
@@ -758,7 +773,11 @@ def determine_exit_code(result: AnalysisResult) -> int:
     """Determine exit code based on analysis results."""
     if result.replace_count > 0:
         return EXIT_RESOURCE_REPLACE
-    if result.actual_set_changes_count > 0 or result.create_count > 0 or result.delete_count > 0:
+    if (
+        result.actual_set_changes_count > 0
+        or result.create_count > 0
+        or result.delete_count > 0
+    ):
         return EXIT_SET_CHANGES
     return EXIT_NO_CHANGES
 
@@ -772,16 +791,16 @@ def parse_args() -> argparse.Namespace:
 Examples:
   # Basic usage
   python analyze_plan.py plan.json
-  
+
   # From stdin
   terraform show -json plan.tfplan | python analyze_plan.py
-  
+
   # CI/CD with exit code
   python analyze_plan.py plan.json --exit-code
-  
+
   # JSON output for programmatic processing
   python analyze_plan.py plan.json --format json
-  
+
   # Summary for CI logs
   python analyze_plan.py plan.json --format summary
 
@@ -790,65 +809,67 @@ Exit codes (with --exit-code):
   1 - Actual Set attribute changes
   2 - Resource replacement detected
   3 - Error
-"""
+""",
     )
-    
+
     parser.add_argument(
         "plan_file",
         nargs="?",
-        help="Path to terraform plan JSON file (reads from stdin if not provided)"
+        help="Path to terraform plan JSON file (reads from stdin if not provided)",
     )
     parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         choices=["markdown", "json", "summary"],
         default="markdown",
-        help="Output format (default: markdown)"
+        help="Output format (default: markdown)",
     )
     parser.add_argument(
-        "--exit-code", "-e",
+        "--exit-code",
+        "-e",
         action="store_true",
-        help="Return exit code based on change severity"
+        help="Return exit code based on change severity",
     )
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
-        help="Suppress warnings and verbose output"
+        help="Suppress warnings and verbose output",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
-        help="Show detailed warnings and debug info"
+        help="Show detailed warnings and debug info",
     )
     parser.add_argument(
         "--ignore-case",
         action="store_true",
-        help="Ignore case when comparing string values"
+        help="Ignore case when comparing string values",
     )
     parser.add_argument(
-        "--attributes",
-        type=Path,
-        help="Path to custom attributes JSON file"
+        "--attributes", type=Path, help="Path to custom attributes JSON file"
     )
     parser.add_argument(
         "--include",
         action="append",
-        help="Only analyze resources matching this pattern (can be repeated)"
+        help="Only analyze resources matching this pattern (can be repeated)",
     )
     parser.add_argument(
         "--exclude",
         action="append",
-        help="Exclude resources matching this pattern (can be repeated)"
+        help="Exclude resources matching this pattern (can be repeated)",
     )
-    
+
     return parser.parse_args()
 
 
 def main():
     """Main entry point."""
     global AZURERM_SET_ATTRIBUTES
-    
+
     args = parse_args()
-    
+
     # Configure global settings
     CONFIG.ignore_case = args.ignore_case
     CONFIG.quiet = args.quiet
@@ -880,7 +901,16 @@ def main():
     resource_changes = plan_json.get("resource_changes", [])
     if not resource_changes:
         if args.format == "json":
-            print(json.dumps({"summary": {}, "has_real_changes": False, "resources": [], "warnings": []}))
+            print(
+                json.dumps(
+                    {
+                        "summary": {},
+                        "has_real_changes": False,
+                        "resources": [],
+                        "warnings": [],
+                    }
+                )
+            )
         elif args.format == "summary":
             print("✅ No changes detected")
         else:
@@ -898,7 +928,7 @@ def main():
         output = format_summary_output(result)
     else:
         output = format_markdown_output(result)
-    
+
     print(output)
 
     # Determine exit code
