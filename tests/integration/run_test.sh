@@ -115,6 +115,7 @@ fi
 # Parse arguments
 SKIP_DEPLOY=false
 SKIP_DESTROY=false
+AUTO_YES=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -126,12 +127,17 @@ while [[ $# -gt 0 ]]; do
             SKIP_DESTROY=true
             shift
             ;;
+        -y|--yes)
+            AUTO_YES=true
+            shift
+            ;;
         -h|--help)
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
             echo "  --skip-deploy   Skip initial deployment (use existing resources)"
             echo "  --skip-destroy  Skip cleanup after test"
+            echo "  -y, --yes       Auto-confirm all prompts"
             echo "  -h, --help      Show this help"
             exit 0
             ;;
@@ -141,6 +147,17 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Helper function for prompts with auto-yes support
+confirm_prompt() {
+    local prompt="$1"
+    if [ "$AUTO_YES" = true ]; then
+        echo "$prompt y (auto)"
+        return 0
+    fi
+    read -p "$prompt" response
+    [[ "$response" =~ ^[Yy]$ ]]
+}
 
 # Step 1: Initialize Terraform
 echo ">>> Initializing Terraform..."
@@ -194,8 +211,7 @@ python3 "$ANALYZER" plan_add_elements.json
 
 # Step 5: Apply the element additions
 echo ""
-read -p ">>> Apply element additions? (y/N): " apply_add
-if [[ "$apply_add" =~ ^[Yy]$ ]]; then
+if confirm_prompt ">>> Apply element additions? (y/N): "; then
     echo ">>> Applying element additions..."
     terraform apply -auto-approve
 
@@ -222,8 +238,7 @@ python3 "$ANALYZER" plan_modify_element.json
 
 # Step 7: Apply the modification
 echo ""
-read -p ">>> Apply element modification? (y/N): " apply_modify
-if [[ "$apply_modify" =~ ^[Yy]$ ]]; then
+if confirm_prompt ">>> Apply element modification? (y/N): "; then
     echo ">>> Applying element modification..."
     terraform apply -auto-approve
 
@@ -250,8 +265,7 @@ python3 "$ANALYZER" plan_add_pool.json
 
 # Step 9: Apply backend pool addition
 echo ""
-read -p ">>> Apply backend pool addition? (y/N): " apply_pool
-if [[ "$apply_pool" =~ ^[Yy]$ ]]; then
+if confirm_prompt ">>> Apply backend pool addition? (y/N): "; then
     echo ">>> Applying backend pool addition..."
     terraform apply -auto-approve
 
@@ -278,8 +292,7 @@ python3 "$ANALYZER" plan_modify_settings.json
 
 # Step 11: Apply http settings modification
 echo ""
-read -p ">>> Apply http settings modification? (y/N): " apply_settings
-if [[ "$apply_settings" =~ ^[Yy]$ ]]; then
+if confirm_prompt ">>> Apply http settings modification? (y/N): "; then
     echo ">>> Applying http settings modification..."
     terraform apply -auto-approve
 
@@ -290,8 +303,7 @@ fi
 
 # Step 12: Final plan check
 echo ""
-read -p ">>> Run final plan to verify no changes? (y/N): " run_final
-if [[ "$run_final" =~ ^[Yy]$ ]]; then
+if confirm_prompt ">>> Run final plan to verify no changes? (y/N): "; then
     echo ">>> Running final plan (should show no changes)..."
     terraform plan -out=plan_final.tfplan
     terraform show -json plan_final.tfplan > plan_final.json
@@ -312,8 +324,7 @@ trap - EXIT
 # Step 14: Cleanup (if not skipped)
 if [ "$SKIP_DESTROY" = false ]; then
     echo ""
-    read -p ">>> Destroy test resources? (y/N): " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    if confirm_prompt ">>> Destroy test resources? (y/N): "; then
         echo ">>> Destroying resources..."
         terraform destroy -auto-approve
     else
