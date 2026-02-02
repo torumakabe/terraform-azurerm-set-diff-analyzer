@@ -20,6 +20,12 @@ Terraform's Set type compares by position rather than by key, so when adding or 
 
 These "false-positive diffs" don't actually affect the resources, but they make reviewing terraform plan output difficult.
 
+## Prerequisites
+
+- Python 3.8+
+
+If Python is unavailable, install via your package manager (e.g., `apt install python3`, `brew install python3`) or from [python.org](https://www.python.org/downloads/).
+
 ## Basic Usage
 
 ```bash
@@ -30,6 +36,11 @@ terraform show -json plan.tfplan > plan.json
 # 2. Analyze
 python scripts/analyze_plan.py plan.json
 ```
+
+## Troubleshooting
+
+- **`python: command not found`**: Use `python3` instead, or install Python
+- **`ModuleNotFoundError`**: Script uses only standard library; ensure Python 3.8+
 
 ## Detailed Documentation
 
